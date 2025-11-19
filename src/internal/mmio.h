@@ -7886,6 +7886,8 @@ extern const field32_t G_TIMx_CCMR1_OUTPUT_OCxCE[3];  /** @brief OC1CE. */
 extern const field32_t G_TIMx_CCMR1_OUTPUT_OCxM_3[3]; /** @brief Output compare 1 mode - bit 3. */
 extern const field32_t G_TIMx_CCMR1_INPUT_ICxF[3];    /** @brief Input capture 1 filter. */
 extern const field32_t G_TIMx_CCMR2_INPUT_ICxPSC[5];  /** @brief Input capture 3 prescaler. */
+extern const field32_t G_TIMx_CCMR2_OUTPUT_OCxM[5];   
+extern const field32_t G_TIMx_CCMR2_OUTPUT_OCxPE[5]; 
 extern const field32_t G_TIMx_CCER_CCxNP[5];          /** @brief Capture/Compare 1 output polarity. */
 extern const field32_t G_TIMx_CCER_CCxP[5];           /** @brief Capture/Compare 1 output polarity. */
 extern const field32_t G_TIMx_CCER_CCxE[5];           /** @brief Capture/Compare 1 output enable. */

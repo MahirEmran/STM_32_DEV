@@ -13809,6 +13809,16 @@ field32_t const G_TIMx_CCMR2_INPUT_ICxPSC[5] = {
   [4] = {.msk = 0x00000C00U, .pos = 10},
 };
 
+field32_t const G_TIMx_CCMR2_OUTPUT_OCxM[5] = {
+  [3] = {.msk = (0b111 << 4), .pos = 4},
+  [4] = {.msk = (0b111 << 12), .pos = 12}
+};
+
+field32_t G_TIMx_CCMR2_OUTPUT_OCxPE[5] = {
+  [3] = {.msk = 0b1 << 3, .pos = 3},
+  [4] = {.msk = 0b1 << 11, .pos = 11}
+};
+
 field32_t const G_TIMx_CCER_CCxNP[5] = {
   [1] = {.msk = 0x00000008U, .pos = 3},
   [2] = {.msk = 0x00000080U, .pos = 7},
