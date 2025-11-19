@@ -29,7 +29,6 @@
 * @section Macros
 **************************************************************************************************/
 
-#define ALT_MODE 2 //this is not always 2
 #define MAX_DUTY_CYCLE 1000
 #define PWM_INSTANCE_COUNT 8 //is this correct?
 
@@ -116,7 +115,7 @@ void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_err
     //Set up GPIO pin
     tal_enable_clock(pwm_config.pin);
     tal_alternate_mode(pwm_config.pin, pwm_config.alt_num);
-    tal_set_mode(pwm_config.pin, ALT_MODE);
+    tal_set_mode(pwm_config.pin, pwm_config.alt_num);
 
     //Set frequency of timer
     int32_t freq_prescaler = PWM_CLOCK_FREQ / pwm_config.freq;
