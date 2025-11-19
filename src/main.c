@@ -28,8 +28,8 @@ void test_spi() {
     uint8_t instance = 2;
     spi_config_t config;
     config.clk_pin = 66; // alt mode 4
-    config.mosi_pin = 28; // alt mode 3;
-    config.miso_pin = 74; // alt mode 3;
+    config.mosi_pin = 28; // alt mode 3
+    config.miso_pin = 74; // alt mode 3
     config.data_size = 8;
     config.mode = 0;
     config.baudrate_prescaler = 2;
