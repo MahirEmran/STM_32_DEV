@@ -13814,7 +13814,7 @@ field32_t const G_TIMx_CCMR2_OUTPUT_OCxM[5] = {
   [4] = {.msk = (0b111 << 12), .pos = 12}
 };
 
-field32_t G_TIMx_CCMR2_OUTPUT_OCxPE[5] = {
+field32_t const G_TIMx_CCMR2_OUTPUT_OCxPE[5] = {
   [3] = {.msk = 0b1 << 3, .pos = 3},
   [4] = {.msk = 0b1 << 11, .pos = 11}
 };

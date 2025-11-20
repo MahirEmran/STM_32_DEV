@@ -87,7 +87,7 @@ static inline void pwm_setup_output_compare(int32_t pwm_inst, uint32_t channel) 
 
 //I am a function comment placeholder :)
 void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
-    
+    // asm("BKPT #0");
     //Check for potential errors
     *errc = TI_ERRC_NONE;
     
@@ -95,13 +95,14 @@ void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_err
         *errc = TI_ERRC_INVALID_ARG;
         return;
     }
-    
+    // asm("BKPT #0");
     enum ti_errc_t validation = check_pwm_config_validity(pwm_config); 
-
+    // asm("BKPT #0");
     if (validation != TI_ERRC_NONE) {
         *errc = validation;
         return;
     }
+    // asm("BKPT #0");
 
     if (pwm_config.freq == 0 || pwm_config.duty == 0) {
         CLR_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
@@ -111,6 +112,7 @@ void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_err
 
     //Enable PWM clock
     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
+    // asm("BKPT #0");
 
     //Set up GPIO pin
     tal_enable_clock(pwm_config.pin);
@@ -119,14 +121,16 @@ void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_err
 
     //Set frequency of timer
     int32_t freq_prescaler = PWM_CLOCK_FREQ / pwm_config.freq;
+    // asm("BKPT #0");
     WRITE_FIELD(G_TIMx_ARR[pwm_inst], G_TIMx_ARR_ARR_L, freq_prescaler);
-
+    // asm("BKPT #0");
     // Set duty cycle
     WRITE_FIELD(G_TIMx_CCR3[pwm_inst], G_TIMx_CCR3_CCR3_L, (freq_prescaler / MAX_DUTY_CYCLE) * pwm_config.duty); //TODO: Double check math for third parameter
-
+    // asm("BKPT #0");
     // Set to output compare
     pwm_setup_output_compare(pwm_inst, pwm_config.channel);
-
+    // asm("BKPT #0");
     //Enable the PWM channel
     pwm_enable_channel(pwm_inst, pwm_config.channel);
+    // asm("BKPT #0");
 }

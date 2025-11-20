@@ -3,7 +3,7 @@
 #include "peripheral/watchdog.h"
 #include "internal/alloc.h"
 #include "peripheral/uart.h"
-#include "peripheral/OLDpwm.h"
+#include "peripheral/pwm.h"
 #include "peripheral/spi.h"
 
 #define USR_BUTTON 9
@@ -102,24 +102,24 @@ void test_uart(){
     // asm("BKPT #0");
 }
 
-void test_pwm(){
-    tal_pwm_pin_init(TIM2_CH1_1, 1000, 30000, (void*)0);
+// void test_pwm(){
+//     tal_pwm_pin_init(TIM2_CH1_1, 1000, 30000, (void*)0);
 
-    //----------
-    // should be done inside the PWM driver.  Here for testing
-    tal_enable_clock(TIM2_CH1_1);
-    SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[2]); // enable clock for TIM2
+//     //----------
+//     // should be done inside the PWM driver.  Here for testing
+//     tal_enable_clock(TIM2_CH1_1);
+//     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[2]); // enable clock for TIM2
 
-    tal_set_mode(TIM2_CH1_1, 2);
-    tal_alternate_mode(TIM2_CH1_1, 0);
-    //----------
+//     tal_set_mode(TIM2_CH1_1, 2);
+//     tal_alternate_mode(TIM2_CH1_1, 0);
+//     //----------
 
 
-    tal_pwm_pin_enable(TIM2_CH1_1, (void*)0);
-    asm("BKPT #0");
-    tal_pwm_pin_disable(TIM2_CH1_1, (void*)0);
-    asm("BKPT #0");
-}
+//     tal_pwm_pin_enable(TIM2_CH1_1, (void*)0);
+//     asm("BKPT #0");
+//     tal_pwm_pin_disable(TIM2_CH1_1, (void*)0);
+//     asm("BKPT #0");
+// }
 
 void test_pwm_first_principles(){
 
@@ -219,55 +219,57 @@ void test_pwm_first_principles(){
 //     }
 // };
 
-struct ti_pwm_config_t {
-    int32_t channel;
-    int32_t alt_num;
-    int32_t pin;
-    int32_t freq;
-    int32_t duty;
-};
+// struct ti_pwm_config_t {
+//     int32_t channel;
+//     int32_t alt_num;
+//     int32_t pin;
+//     int32_t freq;
+//     int32_t duty;
+// };
 
-# define PWM_CLOCK_FREQ 4000000
+// # define PWM_CLOCK_FREQ 4000000
 
-void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t config) {
-    if (config.freq < 0 || config.duty < 0) {
-        // Do error stuff here
-        return;
-    }
-    if (config.freq == 0 || config.duty == 0) {
-        CLR_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
-        return;    
-    }
-    // Enable peripheral clock
-    SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
+// void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t config) {
+//     if (config.freq < 0 || config.duty < 0) {
+//         // Do error stuff here
+//         return;
+//     }
+//     if (config.freq == 0 || config.duty == 0) {
+//         CLR_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
+//         return;    
+//     }
+//     // Enable peripheral clock
+//     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_inst]);
 
-    // Set up GPIO pin
-    tal_enable_clock(config.pin);
-    tal_alternate_mode(config.pin, config.alt_num);
-    tal_set_mode(config.pin, 2);
+//     // Set up GPIO pin
+//     tal_enable_clock(config.pin);
+//     tal_alternate_mode(config.pin, config.alt_num);
+//     tal_set_mode(config.pin, 2);
 
-    // Set frequency of timer
-    const int32_t max_val = PWM_CLOCK_FREQ / config.freq;
-    WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_L, max_val);
+//     // Set frequency of timer
+//     const int32_t max_val = PWM_CLOCK_FREQ / config.freq;
+//     WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_L, max_val);
     
-    // Set duty cycle
-    WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, (max_val / 1000) * config.duty);
+//     // Set duty cycle
+//     WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, (max_val / 1000) * config.duty);
 
-    // Set to output compare
-    if (config.channel >= 3) {
-        WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxM[config.channel], 0b0110);
-        SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[config.channel]);
-    } else {
-        WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxM[config.channel], 0b0110);
-        SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[config.channel]);
-    }
-    // Do some magic
-    SET_FIELD(G_TIMx_CCER[pwm_inst], G_TIMx_CCER_CCxE[config.channel]);
-    SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_CEN);
+//     // Set to output compare
+//     if (config.channel >= 3) {
+//         WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxM[config.channel], 0b0110);
+//         SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[config.channel]);
+//     } else {
+//         WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxM[config.channel], 0b0110);
+//         SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[config.channel]);
+//     }
+//     // Do some magic
+//     SET_FIELD(G_TIMx_CCER[pwm_inst], G_TIMx_CCER_CCxE[config.channel]);
+//     SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_CEN);
 
-    // Enable PWM output
-    SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_ARPE);
-}
+//     // Enable PWM output
+//     SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_ARPE);
+// }
+
+
 
 void _start() {
 
@@ -280,9 +282,13 @@ void _start() {
     };
 
     int32_t dir = 1;
-
+    enum ti_errc_t my_err;
+    enum ti_errc_t* errc = &my_err;
+    asm("BKPT #0");
     while (true) {
-        ti_set_pwm(3, pwm_config);
+        ti_set_pwm(3, pwm_config, errc);
+        enum ti_errc_t err = *errc;
+        // asm("BKPT #0");
         pwm_config.duty += dir;
         if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
             dir *= -1;
