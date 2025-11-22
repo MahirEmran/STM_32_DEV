@@ -14,7 +14,8 @@ case "$OS_TYPE" in
     USB_RESET_BIN="./stm_usb/stm_usb_linux"
     ;;
   MINGW*|MSYS*|CYGWIN*|Windows_NT)
-    USB_RESET_BIN="./stm_usb/stm_usb_win.exe"
+    echo "Windows detected — use build.ps1 instead of build.sh."
+    exit 1
     ;;
   *)
     echo "Unsupported OS: $OS_TYPE"
@@ -97,12 +98,6 @@ while [ $attempt_count -lt $MAX_ATTEMPTS ]; do
         # TODO: unsure if this is right path for CLI in linux
         [ -z "$CLI_BIN" ] && CLI_BIN="/opt/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI"
         ;;
-      MINGW*|MSYS*|CYGWIN*|Windows_NT)
-        # Windows - find CLI
-        CLI_BIN="$(command -v STM32_Programmer_CLI.exe || true)"
-        # TODO: unsure if this is right path for CLI in windows
-        [ -z "$CLI_BIN" ] && CLI_BIN="/c/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
-        ;;
       *)
         echo "Unsupported OS for automated CLI erase: $OS_TYPE"
         rm -f "$OPENOCD_OUTPUT_FILE"
@@ -110,8 +105,7 @@ while [ $attempt_count -lt $MAX_ATTEMPTS ]; do
         ;;
     esac
     
-    # run CLI (windows/linux only)
-    if [[ "$OS_TYPE" != "Darwin" ]]; then
+    if [[ "$OS_TYPE" == "Linux" ]]; then
       if [ ! -x "$CLI_BIN" ] && ! command -v "$CLI_BIN" >/dev/null 2>&1; then
         echo "STM32_Programmer_CLI not found at: $CLI_BIN"
         echo "Please install STM32CubeProgrammer CLI or add it to PATH, then retry."

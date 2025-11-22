@@ -1,5 +1,7 @@
 https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 
+**The directions below are made in case the ```build.ps1``` or ```build.sh``` files do not work. If you are on MacOS/Linux, running ```./build.sh``` should work. If you are on Windows, hopefully (I pray I truly hope) that ```.\build.ps1``` should work.**
+
 Instructions to build and flash:
 Make a build folder in the src directory (yes, it should be outside, yes, I will fix)
 cd into this build folder

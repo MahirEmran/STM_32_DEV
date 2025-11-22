@@ -167,9 +167,9 @@ int spi_init(uint8_t instance, spi_config_t *spi_config) {
 
     // Set alternate function
     // TODO: Set alternate function
-    tal_alternate_mode(spi_config->clk_pin, 4);
-    tal_alternate_mode(spi_config->mosi_pin, 4);
-    tal_alternate_mode(spi_config->miso_pin, 4);
+    tal_alternate_mode(spi_config->clk_pin, 6);
+    tal_alternate_mode(spi_config->mosi_pin, 6);
+    tal_alternate_mode(spi_config->miso_pin, 6);
     // Set gpio speed
     tal_set_speed(spi_config->miso_pin, 3);
     tal_set_speed(spi_config->mosi_pin, 3);
@@ -336,20 +336,24 @@ int spi_transfer_sync(struct spi_sync_transfer_t *transfer) {
     for (int i = 0; i < size; i++) {
         // Wait for TX buffer empty
         // TODO: Figure out what fields here are wrong/not working. Right now while loop does not terminate (until timeout).
-        // while (!READ_FIELD(SPIx_SR[device.instance], SPIx_SR_TXP)) {
-        //     if (--timeout == 0) {
-        //         asm("BKPT #0");
-        //         // return 1;
-        //     //     ti_release_mutex(mutex[device.instance], mutex_timeouts[device.instance]);
-        //         return TI_ERRC_SPI_BLOCKING_TIMEOUT;
-        //     }
+        while (*SPIx_SR[device.instance] & SPIx_SR_TXC.msk == 0) {
+
         // }
+            // !IS_FIELD_SET(SPIx_SR[device.instance], SPIx_SR_TXC)) {
+            if (--timeout == 0) {
+                asm("BKPT #0");
+                // return 1;
+            //     ti_release_mutex(mutex[device.instance], mutex_timeouts[device.instance]);
+                return TI_ERRC_SPI_BLOCKING_TIMEOUT;
+            }
+        }
         // TODO: Make sure this writing is correct
         *SPIx_TXDR[device.instance] = ((uint8_t *)source)[i];
         asm("BKPT #0");
+        return 0;
         // Wait for RX buffer not empty
         // TODO: Figure out what fields here are wrong/not working. Right now while loop does not terminate (until timeout).
-        while (!READ_FIELD(SPIx_SR[device.instance], SPIx_SR_RXP)) {
+        while (!IS_FIELD_SET(SPIx_SR[device.instance], SPIx_SR_RXP)) {
             if (--timeout == 0) {
             //     ti_release_mutex(mutex[device.instance], mutex_timeouts[device.instance]);
                 return TI_ERRC_SPI_BLOCKING_TIMEOUT;
@@ -360,7 +364,7 @@ int spi_transfer_sync(struct spi_sync_transfer_t *transfer) {
         if (read_inc)
             index = i;
         // TODO: is this call supposed to still be done when we are writing? It is outside if statement.
-        ((uint8_t *)dest)[index] = *SPIx_TXDR[device.instance];
+        ((uint8_t *)dest)[i] = *SPIx_RXDR[device.instance];
     }
 
     return TI_ERRC_NONE;

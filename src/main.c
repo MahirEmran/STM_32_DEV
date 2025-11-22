@@ -5,6 +5,7 @@
 #include "peripheral/uart.h"
 #include "peripheral/pwm.h"
 #include "peripheral/spi.h"
+#include "internal/mmio.h"
 
 #define USR_BUTTON 9
 #define GREEN_LED 49
@@ -25,39 +26,41 @@ extern uint32_t __heap_start;
 
 
 void test_spi() {
-    uint8_t instance = 2;
-    spi_config_t config;
-    config.clk_pin = 66; // alt mode 4
-    config.mosi_pin = 28; // alt mode 3
-    config.miso_pin = 74; // alt mode 3
-    config.data_size = 8;
-    config.mode = 0;
-    config.baudrate_prescaler = 2;
-    config.first_bit = 0;
-    config.priority = 0;
-    config.mutex_timeout =0;
-    spi_init(instance, &config);
-    asm("BKPT #0");
+    for (int i = 0; i < 4; i++) {
+        // i represents mode
+         uint8_t instance = 3;
+        spi_config_t config;
+        config.clk_pin = 109; // alt mode 4
+        config.mosi_pin = 111; // alt mode 3
+        config.miso_pin = 110; // alt mode 3
+        config.data_size = 8;
+        config.mode = i;
+        config.baudrate_prescaler = 2;
+        config.first_bit = 0;
+        config.priority = 0;
+        config.mutex_timeout =0;
+        spi_init(instance, &config);
 
-    spi_device_t device;
-    device.instance = 2;
-    device.gpio_pin = 0;
+        spi_device_t device;
+        device.instance = 3;
+        device.gpio_pin = 0;
 
-    struct spi_sync_transfer_t transfer;
-    uint8_t* source;
-    (*source) = 0b10101010;
-    transfer.source = source;
-    uint8_t* dest;
-    transfer.dest = dest;
-    size_t size = 1;
-    transfer.size = size;
-    uint32_t timeout = 10000000;
-    transfer.timeout = timeout;
-    bool read_inc = false;
-    transfer.read_inc = read_inc;
-    asm("BKPT #0");
+        struct spi_sync_transfer_t transfer;
+        uint8_t source[8];
+        source[0] = 0b10101010;
+        transfer.source = source;
+        uint8_t dest[8];
+        transfer.dest = dest;
+        size_t size = 1;
+        transfer.size = size;
+        uint32_t timeout = 10000000;
+        transfer.timeout = timeout;
+        bool read_inc = false;
+        transfer.read_inc = read_inc;
+        asm("BKPT #0");
+        spi_transfer_sync(&transfer);
+    }
 
-    spi_transfer_sync(&transfer);
     asm("BKPT #0");
 }
 
@@ -120,6 +123,37 @@ void test_uart(){
 //     tal_pwm_pin_disable(TIM2_CH1_1, (void*)0);
 //     asm("BKPT #0");
 // }
+
+void test_pwm() {
+    // test diff instances (channel)
+    struct ti_pwm_config_t pwm_config = {
+        .channel = 1,
+        .alt_num = 2,
+        .pin = 131,
+        .freq = 40, // 100000 Hz, so time should be 1/100000 or 0.01s, or 10 us.
+        .duty = 500,
+    };
+
+    WRITE_FIELD(RCC_D2CFGR, RCC_D2CFGR_D2PPREx[1], 0b111);
+    WRITE_FIELD(RCC_D2CFGR, RCC_D2CFGR_D2PPREx[2], 0b111);
+    WRITE_FIELD(RCC_D1CFGR, RCC_D1CFGR_HPRE, 0b1001);
+
+
+    int32_t dir = 1;
+    enum ti_errc_t my_err;
+    enum ti_errc_t* errc = &my_err;
+    asm("BKPT #0");
+    while (true) {
+        ti_set_pwm(3, pwm_config, errc);
+        enum ti_errc_t err = *errc;
+        // asm("BKPT #0");
+        pwm_config.duty += dir;
+        if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
+            dir *= -1;
+        }
+        delay(1000);
+    
+}
 
 void test_pwm_first_principles(){
 
@@ -273,28 +307,28 @@ void test_pwm_first_principles(){
 
 void _start() {
 
-    struct ti_pwm_config_t pwm_config = {
-        .channel = 3,
-        .alt_num = 2,
-        .pin = 49,
-        .freq = 100,
-        .duty = 0,
-    };
+    // struct ti_pwm_config_t pwm_config = {
+    //     .channel = 3,
+    //     .alt_num = 2,
+    //     .pin = 49,
+    //     .freq = 100,
+    //     .duty = 0,
+    // };
 
-    int32_t dir = 1;
-    enum ti_errc_t my_err;
-    enum ti_errc_t* errc = &my_err;
-    asm("BKPT #0");
-    while (true) {
-        ti_set_pwm(3, pwm_config, errc);
-        enum ti_errc_t err = *errc;
-        // asm("BKPT #0");
-        pwm_config.duty += dir;
-        if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
-            dir *= -1;
-        }
-        delay(1000);
-    }
+    // int32_t dir = 1;
+    // enum ti_errc_t my_err;
+    // enum ti_errc_t* errc = &my_err;
+    // asm("BKPT #0");
+    // while (true) {
+    //     ti_set_pwm(3, pwm_config, errc);
+    //     enum ti_errc_t err = *errc;
+    //     // asm("BKPT #0");
+    //     pwm_config.duty += dir;
+    //     if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
+    //         dir *= -1;
+    //     }
+    //     delay(1000);
+    // }
 
     // test_pwm_first_principles();
     // tal_enable_clock(GREEN_LED);
@@ -318,7 +352,7 @@ void _start() {
     // tal_set_pin(YELLOW_LED, 1);
     
 
-    // test_pwm();
+    test_pwm();
     // test_uart();
     // test_spi();
 }

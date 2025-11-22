@@ -29,7 +29,7 @@
 * @section Macros
 **************************************************************************************************/
 
-#define PWM_CLOCK_FREQ 4000000
+#define PWM_CLOCK_FREQ 2000000
 
 /**************************************************************************************************
 * @section Type Definitions
@@ -37,10 +37,10 @@
 
 struct ti_pwm_config_t {
     int32_t channel;
+    int32_t alt_num;
     int32_t pin;
     int32_t freq;
     int32_t duty;
-    int32_t alt_num;
 };
 
 
