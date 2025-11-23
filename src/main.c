@@ -127,10 +127,10 @@ void test_uart(){
 void test_pwm() {
     // test diff instances (channel)
     struct ti_pwm_config_t pwm_config = {
-        .channel = 1,
+        .channel = 2, 
         .alt_num = 2,
-        .pin = 131,
-        .freq = 40, // 100000 Hz, so time should be 1/100000 or 0.01s, or 10 us.
+        .pin = 83, 
+        .freq = 40, 
         .duty = 500,
     };
 
@@ -139,75 +139,76 @@ void test_pwm() {
     WRITE_FIELD(RCC_D1CFGR, RCC_D1CFGR_HPRE, 0b1001);
 
 
-    int32_t dir = 1;
+    //int32_t dir = 1;
     enum ti_errc_t my_err;
     enum ti_errc_t* errc = &my_err;
+
     asm("BKPT #0");
     while (true) {
-        ti_set_pwm(3, pwm_config, errc);
+        ti_set_pwm(4, pwm_config, errc);
         enum ti_errc_t err = *errc;
         // asm("BKPT #0");
-        pwm_config.duty += dir;
-        if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
-            dir *= -1;
-        }
+        // pwm_config.duty += dir;
+        // if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
+        //     dir *= -1;
+        // }
         delay(1000);
-    
+    } 
 }
 
-void test_pwm_first_principles(){
+// void test_pwm_first_principles() {
 
     
-    tal_enable_clock(GREEN_LED);
-    tal_enable_clock(YELLOW_LED);
-    tal_set_mode(YELLOW_LED, 1);
-    tal_set_pin(YELLOW_LED, 1); // boot successful 
+//     tal_enable_clock(GREEN_LED);
+//     tal_enable_clock(YELLOW_LED);
+//     tal_set_mode(YELLOW_LED, 1);
+//     tal_set_pin(YELLOW_LED, 1); // boot successful 
 
-    tal_set_mode(GREEN_LED, 2);
-    tal_alternate_mode(GREEN_LED, 2);  
+//     tal_set_mode(GREEN_LED, 2);
+//     tal_alternate_mode(GREEN_LED, 2);  
 
-    uint16_t freqency = 32; // unused atm
+//     uint16_t freqency = 32; // unused atm
 
-    SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[3]);
+//     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[3]);
 
-    WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_L, (1 << 16) - 1);
-    WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_H, (1 << 16) - 1);
-    WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, (1 << 16) - 1);
-    WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_H, (1 << 16) - 1);
+//     WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_L, (1 << 16) - 1);
+//     WRITE_FIELD(G_TIMx_ARR[3], G_TIMx_ARR_ARR_H, (1 << 16) - 1);
+//     WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, (1 << 16) - 1);
+//     WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_H, (1 << 16) - 1);
 
-    field32_t G_TIMx_CCMR2_OUTPUT_OC3M = {
-        .msk = (0b111 << 4),
-        .pos = 4
-    };
-    field32_t G_TIMx_CCMR2_OUTPUT_OC3PE = {
-        .msk = 0b1 << 3,
-        .pos = 3
-    };
+//     field32_t G_TIMx_CCMR2_OUTPUT_OC3M = {
+//         .msk = (0b111 << 4),
+//         .pos = 4
+//     };
+//     field32_t G_TIMx_CCMR2_OUTPUT_OC3PE = {
+//         .msk = 0b1 << 3,
+//         .pos = 3
+//     };
 
-    WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[3], G_TIMx_CCMR2_OUTPUT_OC3M, 0b0110); // configure as PWM output
-    SET_FIELD(G_TIMx_CCMR2_OUTPUT[3], G_TIMx_CCMR2_OUTPUT_OC3PE);
-    SET_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_ARPE);
+//     WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[3], G_TIMx_CCMR2_OUTPUT_OC3M, 0b0110); // configure as PWM output
+//     SET_FIELD(G_TIMx_CCMR2_OUTPUT[3], G_TIMx_CCMR2_OUTPUT_OC3PE);
+//     SET_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_ARPE);
 
-    SET_FIELD(G_TIMx_CCER[3], G_TIMx_CCER_CCxE[3]);
-    SET_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_CEN);
+//     SET_FIELD(G_TIMx_CCER[3], G_TIMx_CCER_CCxE[3]);
+//     SET_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_CEN);
     
-    uint16_t duty_cycle = UINT16_MAX;
-    int inc = -1;
+//     uint16_t duty_cycle = UINT16_MAX;
+//     int inc = -1;
 
-    while (true) {
-        duty_cycle += inc;
-        if (duty_cycle == 0 || duty_cycle == UINT16_MAX) {
-            inc = -inc;
-        }
+//     while (true) {
+//         duty_cycle += inc;
+//         if (duty_cycle == 0 || duty_cycle == UINT16_MAX) {
+//             inc = -inc;
+//         }
 
-        WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, duty_cycle);
+//         WRITE_FIELD(G_TIMx_CCR3[3], G_TIMx_CCR3_CCR3_L, duty_cycle);
 
-        delay(100);
-    }
+//         delay(100);
+//     }
 
 
-    // CLR_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_CEN);
-}
+//     // CLR_FIELD(G_TIMx_CR1[3], G_TIMx_CR1_CEN);
+// }
 
 // field32_t G_TIMx_CCMR2_OUTPUT_OCxM[5] = {
 //     [3] = {

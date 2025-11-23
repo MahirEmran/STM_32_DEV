@@ -29,8 +29,9 @@
 * @section Macros
 **************************************************************************************************/
 
+#define PWM_CLOCK_FREQ 2000000
 #define MAX_DUTY_CYCLE 1000
-#define PWM_INSTANCE_COUNT 8 //is this correct?
+#define PWM_INSTANCE_COUNT 8 
 
 
 /**************************************************************************************************
@@ -66,21 +67,37 @@ static inline void pwm_enable_channel(int32_t pwm_inst, uint32_t channel) {
     
     // Enable PWM channel output on the timer
     SET_FIELD(G_TIMx_CCER[pwm_inst], G_TIMx_CCER_CCxE[channel]);
-
+    // asm("BKPT #0");
     //Enable the timer
     SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_CEN);
-
+    // asm("BKPT #0");
     // Enable PWM output
     SET_FIELD(G_TIMx_CR1[pwm_inst], G_TIMx_CR1_ARPE);
+    // asm("BKPT #0");
 }
 
-static inline void pwm_setup_output_compare(int32_t pwm_inst, uint32_t channel) {
-    if (channel <= 3) {
-        WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxM[channel], 0b0110); //added to line 7889 of mmio
-        SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]); //added to line 7890 of mmio
-    } else {
-        WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxM[channel], 0b0110); //TODO: Replace 0b0110 with a define constant
-        SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]);
+// static inline void pwm_setup_output_compare(int32_t pwm_inst, uint32_t channel) {
+//     if (channel <= 3) {
+//         WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxM[channel], 0b0110); //added to line 7889 of mmio
+//         SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]); //added to line 7890 of mmio
+//     } else {
+//         WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxM[channel], 0b0110); //TODO: Replace 0b0110 with a define constant
+//         SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]);
+//     }
+// }
+
+static inline void pwm_setup_output_compare(int32_t pwm_inst, uint32_t channel) { 
+    // Use a defined constant instead of 0b0110 (PWM Mode 1)
+    #define PWM_MODE1 0b0110
+    // asm("BKPT #0");
+    if (channel == 1 || channel == 2) {
+        WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxM[channel], PWM_MODE1);
+        SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_inst], G_TIMx_CCMR1_OUTPUT_OCxPE[channel]); 
+        // asm("BKPT #0");
+    } else if (channel == 3 || channel == 4) { 
+        WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxM[channel], PWM_MODE1); 
+        SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_inst], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]);
+        // asm("BKPT #0");
     }
 }
 
@@ -122,17 +139,33 @@ void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_err
     //Set up GPIO pin
     tal_enable_clock(pwm_config.pin);
     tal_set_mode(pwm_config.pin, 2);
-
     tal_alternate_mode(pwm_config.pin, pwm_config.alt_num);
 
     //Set frequency of timer
-    int32_t freq_prescaler = PWM_CLOCK_FREQ / pwm_config.freq; // 6000 / 100000 = 40 
+    int32_t freq_prescaler = (PWM_CLOCK_FREQ / pwm_config.freq) - 1;
 
     // asm("BKPT #0");
     WRITE_FIELD(G_TIMx_ARR[pwm_inst], G_TIMx_ARR_ARR_L, freq_prescaler);
     // asm("BKPT #0");
     // Set duty cycle
-    WRITE_FIELD(G_TIMx_CCR3[pwm_inst], G_TIMx_CCR3_CCR3_L, (freq_prescaler * pwm_config.duty) / MAX_DUTY_CYCLE); //TODO: Double check math for third parameter
+    int32_t ccr_value = (freq_prescaler * pwm_config.duty) / MAX_DUTY_CYCLE;
+    switch(pwm_config.channel) {
+        case 1: 
+            WRITE_FIELD(G_TIMx_CCR1[pwm_inst], G_TIMx_CCR1_CCR1_L, ccr_value);
+            break;
+        case 2: 
+            WRITE_FIELD(G_TIMx_CCR2[pwm_inst], G_TIMx_CCR2_CCR2_L, ccr_value);
+            break;
+        case 3: 
+            WRITE_FIELD(G_TIMx_CCR3[pwm_inst], G_TIMx_CCR3_CCR3_L, ccr_value);
+            break;
+        case 4: 
+            WRITE_FIELD(G_TIMx_CCR4[pwm_inst], G_TIMx_CCR4_CCR4_L, ccr_value);
+            break;
+        default: 
+            *errc = TI_ERRC_INVALID_ARG;
+            return;
+    }
     // asm("BKPT #0");
     // Set to output compare
     pwm_setup_output_compare(pwm_inst, pwm_config.channel);
