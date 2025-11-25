@@ -31,8 +31,8 @@
 
 struct ti_pwm_config_t {
     int32_t channel;
-    int32_t alt_num;
-    int32_t pin;
+    int32_t instance;
+    int32_t clock_freq;
     int32_t freq;
     int32_t duty;
 };
@@ -45,8 +45,7 @@ struct ti_pwm_config_t {
 /** 
 * @brief Configures a timer and GPIO pin to output PWM at the specified frequency and duty cycle.
 * 
-* @param pwm_inst A specific instance of PWM
 * @param pwm_config Takes information from the pwm_config structure
 * @param errc Pointer to error code
 */
-void ti_set_pwm(int32_t pwm_inst, struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc);
+void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc);

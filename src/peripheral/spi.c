@@ -167,9 +167,9 @@ int spi_init(uint8_t instance, spi_config_t *spi_config) {
 
     // Set alternate function
     // TODO: Set alternate function
-    tal_alternate_mode(spi_config->clk_pin, 6);
-    tal_alternate_mode(spi_config->mosi_pin, 6);
-    tal_alternate_mode(spi_config->miso_pin, 6);
+    tal_alternate_mode(spi_config->clk_pin, 5);
+    tal_alternate_mode(spi_config->mosi_pin, 5);
+    tal_alternate_mode(spi_config->miso_pin, 5);
     // Set gpio speed
     tal_set_speed(spi_config->miso_pin, 3);
     tal_set_speed(spi_config->mosi_pin, 3);
@@ -317,7 +317,6 @@ bool spi_is_blocked(spi_device_t device) {
     return !tal_read_pin(device.gpio_pin);
     // return (ti_is_mutex_locked(mutex[device.instance]) && !tal_read_pin(device.gpio_pin));
 }
-
 int spi_transfer_sync(struct spi_sync_transfer_t *transfer) {
     spi_device_t device = transfer->device;
     void *source = transfer->source;
@@ -325,51 +324,51 @@ int spi_transfer_sync(struct spi_sync_transfer_t *transfer) {
     size_t size = transfer->size;
     uint32_t timeout = transfer->timeout;
     bool read_inc = transfer->read_inc;
+    bool write_inc = true; // assume TX increments
     asm("BKPT #0");
 
-    // If spi transaction isn't locked, exit w/ error.
+    // Optional: check SPI lock
     // if (!spi_is_blocked(device)) {
     //     return TI_ERRC_SPI_NOT_LOCKED;
     // }
 
-    // Perform blocking transfer
-    for (int i = 0; i < size; i++) {
-        // Wait for TX buffer empty
-        // TODO: Figure out what fields here are wrong/not working. Right now while loop does not terminate (until timeout).
-        while (*SPIx_SR[device.instance] & SPIx_SR_TXC.msk == 0) {
+    for (size_t i = 0; i < size; i++) {
+        uint32_t local_timeout = timeout;
 
-        // }
-            // !IS_FIELD_SET(SPIx_SR[device.instance], SPIx_SR_TXC)) {
-            if (--timeout == 0) {
-                asm("BKPT #0");
-                // return 1;
-            //     ti_release_mutex(mutex[device.instance], mutex_timeouts[device.instance]);
+        // Wait until TX buffer has room
+        volatile uint32_t *SPI2_SR = (uint32_t *) 0x40003814;
+        uint32_t sr_debug = *SPI2_SR;
+        uint32_t sr_debug1 = *SPIx_SR[device.instance];
+        ro_reg32_t sr_debug2 = SPIx_SR[device.instance];
+        while (!READ_FIELD(SPIx_SR[device.instance], SPIx_SR_TXP)) {
+            if (--local_timeout == 0) {
                 return TI_ERRC_SPI_BLOCKING_TIMEOUT;
             }
         }
-        // TODO: Make sure this writing is correct
-        *SPIx_TXDR[device.instance] = ((uint8_t *)source)[i];
         asm("BKPT #0");
-        return 0;
-        // Wait for RX buffer not empty
-        // TODO: Figure out what fields here are wrong/not working. Right now while loop does not terminate (until timeout).
-        while (!IS_FIELD_SET(SPIx_SR[device.instance], SPIx_SR_RXP)) {
-            if (--timeout == 0) {
-            //     ti_release_mutex(mutex[device.instance], mutex_timeouts[device.instance]);
+        // Write next byte
+        *SPIx_TXDR[device.instance] = ((uint8_t *)source)[i];
+
+        // Wait until RX buffer has data
+        local_timeout = timeout;
+        while (!READ_FIELD(SPIx_SR[device.instance], SPIx_SR_RXP)) {
+            if (--local_timeout == 0) {
                 return TI_ERRC_SPI_BLOCKING_TIMEOUT;
-            // return ;
             }
         }
-        int index = 0;
-        if (read_inc)
-            index = i;
-        // TODO: is this call supposed to still be done when we are writing? It is outside if statement.
-        ((uint8_t *)dest)[i] = *SPIx_RXDR[device.instance];
+
+        // Read received byte
+        size_t index = read_inc ? i : 0;
+        ((uint8_t *)dest)[index] = *SPIx_RXDR[device.instance];
+    }
+
+    // Optional: drain remaining RX data (if FIFO > 1)
+    while (READ_FIELD(SPIx_SR[device.instance], SPIx_SR_RXP)) {
+        (void)(*SPIx_RXDR[device.instance]);
     }
 
     return TI_ERRC_NONE;
 }
-
  int spi_transfer_async(struct spi_async_transfer_t *transfer) {
     return 0;
  }
