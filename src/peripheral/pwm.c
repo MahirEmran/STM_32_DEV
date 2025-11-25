@@ -39,7 +39,6 @@
 **************************************************************************************************/
 
 static enum ti_errc_t check_pwm_config_validity(struct ti_pwm_config_t pwm_config) {
-    
     if (pwm_config.freq <= 0) {
         return TI_ERRC_INVALID_ARG;
     }
@@ -58,90 +57,39 @@ static enum ti_errc_t check_pwm_config_validity(struct ti_pwm_config_t pwm_confi
     }
     // asm("BKPT #0");
     
-    // TODO: validate pin, channel, alt number
+    if (pwm_config.channel < 1 || pwm_config.channel > 4) {
+        return TI_ERRC_INVALID_ARG;
+    }
+    // TODO: Remove when instances 1, and 6+ are implemented.
+    if (pwm_config.instance < 2 || pwm_config.instance > 5) {
+        return TI_ERRC_INVALID_ARG;
+    }
 
     return TI_ERRC_NONE; 
 }
 
-static inline void pwm_enable_channel(int32_t instance, uint32_t channel) {
-    
-    // Enable PWM channel output on the timer
-    SET_FIELD(G_TIMx_CCER[instance], G_TIMx_CCER_CCxE[channel]);
-    // asm("BKPT #0");
-    //Enable the timer
-    SET_FIELD(G_TIMx_CR1[instance], G_TIMx_CR1_CEN);
-    // asm("BKPT #0");
-    // Enable PWM output
-    SET_FIELD(G_TIMx_CR1[instance], G_TIMx_CR1_ARPE);
-    
-    // asm("BKPT #0");
-}
-
-// static inline void pwm_setup_output_compare(int32_t pwm_config.instance, uint32_t channel) {
-//     if (channel <= 3) {
-//         WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxM[channel], 0b0110); //added to line 7889 of mmio
-//         SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]); //added to line 7890 of mmio
-//     } else {
-//         WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR1_OUTPUT_OCxM[channel], 0b0110); //TODO: Replace 0b0110 with a define constant
-//         SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]);
-//     }
-// }
-
-static inline void pwm_setup_output_compare(uint32_t instance, uint32_t channel) { 
-    // Use a defined constant instead of 0b0110 (PWM Mode 1)
-    // TODO: is this PWM mode 1 right? check it
-    #define PWM_MODE1 0b0110
-    // asm("BKPT #0");
-    if (channel == 1 || channel == 2) {
-        WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[instance], G_TIMx_CCMR1_OUTPUT_OCxM[channel], PWM_MODE1);
-        SET_FIELD(G_TIMx_CCMR1_OUTPUT[instance], G_TIMx_CCMR1_OUTPUT_OCxPE[channel]); 
-        // asm("BKPT #0");
-    } else if (channel == 3 || channel == 4) { 
-        WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[instance], G_TIMx_CCMR2_OUTPUT_OCxM[channel], PWM_MODE1); 
-        SET_FIELD(G_TIMx_CCMR2_OUTPUT[instance], G_TIMx_CCMR2_OUTPUT_OCxPE[channel]);
-        // asm("BKPT #0");
-    }
-}
 
 void pwm_set_pin_vals(int* pin, int* alt_mode, int32_t instance, int32_t channel) {
     *alt_mode =  instance == 2 ? 1 : 2;
     switch (instance) {
-        // case 1:
-        //     switch (channel) {
-        //         case 1:
-        //             *pin = 59; // E9
-        //             break;
-        //         case 2:
-        //             *pin = 61; // E11
-        //             break;
-        //         case 3:
-        //             *pin = 63; // E13
-        //             break;
-        //         case 4:
-        //             *pin = 64; // E14
-        //             break;
-        //         default:
-        //             break;
-        //     }
-        //     break;
         case 2:
             switch (channel) {
                 case 1:
-                    // *pin = 37; // A0
+                    *pin = 37; // A0
                     // *pin = 44; // A5
-                    *pin = 108; // A15
+                    // *pin = 108; // A15
                     break;
                 case 2:
-                    // *pin = 38; // A1
-                    *pin = 130; // B3
+                    *pin = 38; // A1
+                    // *pin = 130; // B3
                     break;
                 case 3:
-                    // *pin = 39; // A2
-                    *pin = 66; // B10
+                    *pin = 39; // A2
+                    // *pin = 66; // B10
                     break;
                 case 4:
-                    // *pin = 40; // A3
-                    *pin = 67; // B11
+                    *pin = 40; // A3
+                    // *pin = 67; // B11
                     break;
                 default:
                     break;
@@ -285,9 +233,25 @@ void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
     }
     // asm("BKPT #0");
     // Set to output compare
-    pwm_setup_output_compare(pwm_config.instance, pwm_config.channel);
+
+    if (pwm_config.channel == 1 || pwm_config.channel == 2) {
+        WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR1_OUTPUT_OCxM[pwm_config.channel], 0b0110);
+        SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR1_OUTPUT_OCxPE[pwm_config.channel]); 
+        // asm("BKPT #0");
+    } else if (pwm_config.channel == 3 || pwm_config.channel == 4) { 
+        WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxM[pwm_config.channel], 0b0110); 
+        SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxPE[pwm_config.channel]);
+        // asm("BKPT #0");
+    }
+
     // asm("BKPT #0");
-    //Enable the PWM channel
-    pwm_enable_channel(pwm_config.instance, pwm_config.channel);
+    // Enable PWM channel output on the timer
+    SET_FIELD(G_TIMx_CCER[pwm_config.instance], G_TIMx_CCER_CCxE[pwm_config.channel]);
+    // asm("BKPT #0");
+    //Enable the timer
+    SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_CEN);
+    // asm("BKPT #0");
+    // Enable PWM output
+    SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_ARPE);
     // asm("BKPT #0");
 }
