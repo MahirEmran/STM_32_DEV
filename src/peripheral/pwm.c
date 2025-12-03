@@ -154,9 +154,7 @@ void pwm_set_pin_vals(int* pin, int* alt_mode, int32_t instance, int32_t channel
             break;
         default:
             break;
-    }
-
-    
+    } 
 }
 
 
@@ -165,7 +163,7 @@ void pwm_set_pin_vals(int* pin, int* alt_mode, int32_t instance, int32_t channel
 **************************************************************************************************/
 
 void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
-    //Check for errors
+    // Check for errors
     *errc = TI_ERRC_NONE;
     
     if (pwm_config.instance > INSTANCE_COUNT) {
@@ -180,10 +178,10 @@ void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
         return;
     }
 
-    //Enable PWM clock
+    // Enable PWM clock
     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_config.instance]);
 
-    //Set up GPIO pin
+    // Set up GPIO pin
     int pin;
     int alt_mode;
     pwm_set_pin_vals(&pin, &alt_mode, pwm_config.instance, pwm_config.channel);
@@ -238,7 +236,7 @@ void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
 
     // Enable PWM channel output on the timer
     SET_FIELD(G_TIMx_CCER[pwm_config.instance], G_TIMx_CCER_CCxE[pwm_config.channel]);
-    //Enable the timer
+    // Enable the timer
     SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_CEN);
     // Enable PWM output
     SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_ARPE);
