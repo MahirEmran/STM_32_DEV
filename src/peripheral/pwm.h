@@ -32,9 +32,9 @@
 struct ti_pwm_config_t {
     int32_t channel;
     int32_t instance;
-    int32_t clock_freq;
     int32_t freq;
     int32_t duty;
+    int32_t clock_freq;
 };
 
 

@@ -130,45 +130,56 @@ void test_pwm() {
     //     // }
     //     delay(1000);
     // } 
-    for (int i = 2; i <= 5; i+=3) {
-        for (int j = 1; j <= 4; j++) {
+    // for (int i = 2; i <= 5; i+=3) {
+    //     for (int j = 1; j <= 4; j++) {
 
-                struct ti_pwm_config_t pwm_config = {
-                .instance = i,
-                .channel = j, 
+    //             struct ti_pwm_config_t pwm_config = {
+    //             .instance = i,
+    //             .channel = j, 
 
-                .freq = 40, 
-                .clock_freq = 2000000,
-                .duty = 500,
-            };
+    //             .freq = 40, 
+    //             .clock_freq = 2000000,
+    //             .duty = 500,
+    //         };
         
-            //int32_t dir = 1;
-            enum ti_errc_t my_err;
-            enum ti_errc_t* errc = &my_err;
+    //         //int32_t dir = 1;
+    //         enum ti_errc_t my_err;
+    //         enum ti_errc_t* errc = &my_err;
 
             
-            // while (true) {
-            for (int k = 0; k < 40; k++) {
-                ti_set_pwm(pwm_config, errc);
-                enum ti_errc_t err = *errc;
+    //         // while (true) {
+    //         for (int k = 0; k < 40; k++) {
+    //             ti_set_pwm(pwm_config, errc);
+    //             enum ti_errc_t err = *errc;
      
-                // asm("BKPT #0");
-                // pwm_config.duty += dir;
-                // if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
-                //     dir *= -1;
-                // }
-                delay(1000);
-            } 
-            asm("BKPT #0");
-        }
+    //             // asm("BKPT #0");
+    //             // pwm_config.duty += dir;
+    //             // if (pwm_config.duty == 1000 || pwm_config.duty == 0) {
+    //             //     dir *= -1;
+    //             // }
+    //             delay(1000);
+    //         } 
+    //         asm("BKPT #0");
+    //     }
             
+    // }
+    struct ti_pwm_config_t pwm_config = {
+        .instance = 2, 
+        .channel = 1,
+        .freq = 40,
+        .duty = 500,
+        .clock_freq = 2000000,
+    };
+
+    enum ti_errc_t err;
+    enum ti_errc_t* errc = &err;
+
+    while (true) {
+        ti_set_pwm(pwm_config, errc);
+        enum ti_errc_t err = *errc;
+
+        delay(1000);
     }
-    
-
-   
-
-
-
 }
 
 
@@ -220,7 +231,7 @@ void _start() {
     // tal_set_pin(YELLOW_LED, 1);
     
 
-    // test_pwm();
+    test_pwm();
     // test_uart();
-    test_spi();
+    //test_spi();
 }

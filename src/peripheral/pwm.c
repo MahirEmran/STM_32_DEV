@@ -29,9 +29,9 @@
 * @section Macros
 **************************************************************************************************/
 
-// #define PWM_CLOCK_FREQ 2000000
+//#define PWM_CLOCK_FREQ 2000000
 #define MAX_DUTY_CYCLE 1000
-#define INSTANCE_COUNT 8 
+#define INSTANCE_COUNT 5
 
 
 /**************************************************************************************************
@@ -43,24 +43,23 @@ static enum ti_errc_t check_pwm_config_validity(struct ti_pwm_config_t pwm_confi
         return TI_ERRC_INVALID_ARG;
     }
 
-    int32_t freq_prescaler = pwm_config.clock_freq / pwm_config.freq;
-    // asm("BKPT #0");
-    if (freq_prescaler > UINT16_MAX) {
-        // asm("BKPT #0");
+    if (pwm_config.clock_freq <= 0) {
         return TI_ERRC_INVALID_ARG;
     }
-    // asm("BKPT #0");
+
+    int32_t freq_prescaler = pwm_config.clock_freq / pwm_config.freq;
+    if (freq_prescaler == 0 || freq_prescaler > UINT16_MAX) {
+        return TI_ERRC_INVALID_ARG;
+    }
 
     if (pwm_config.duty < 0 || pwm_config.duty > MAX_DUTY_CYCLE) {
-        // asm("BKPT #0");
         return TI_ERRC_INVALID_ARG;
     }
-    // asm("BKPT #0");
     
     if (pwm_config.channel < 1 || pwm_config.channel > 4) {
         return TI_ERRC_INVALID_ARG;
     }
-    // TODO: Remove when instances 1, and 6+ are implemented.
+
     if (pwm_config.instance < 2 || pwm_config.instance > 5) {
         return TI_ERRC_INVALID_ARG;
     }
@@ -70,14 +69,14 @@ static enum ti_errc_t check_pwm_config_validity(struct ti_pwm_config_t pwm_confi
 
 
 void pwm_set_pin_vals(int* pin, int* alt_mode, int32_t instance, int32_t channel) {
-    *alt_mode =  instance == 2 ? 1 : 2;
+    *alt_mode = (instance == 2) ? 1 : 2;
     switch (instance) {
         case 2:
             switch (channel) {
                 case 1:
                     *pin = 37; // A0
-                    // *pin = 44; // A5
-                    // *pin = 108; // A15
+                    //*pin = 44; // A5
+                    //*pin = 108; // A15
                     break;
                 case 2:
                     *pin = 38; // A1
@@ -165,93 +164,82 @@ void pwm_set_pin_vals(int* pin, int* alt_mode, int32_t instance, int32_t channel
 * @section Public Function Implementations
 **************************************************************************************************/
 
-
-//I am a function comment placeholder :)
 void ti_set_pwm(struct ti_pwm_config_t pwm_config, enum ti_errc_t* errc) {
-    // asm("BKPT #0");
-    //Check for potential errors
+    //Check for errors
     *errc = TI_ERRC_NONE;
     
-    if (pwm_config.instance >= INSTANCE_COUNT) {
+    if (pwm_config.instance > INSTANCE_COUNT) {
         *errc = TI_ERRC_INVALID_ARG;
         return;
     }
-    // asm("BKPT #0");
+
     enum ti_errc_t validation = check_pwm_config_validity(pwm_config); 
-    // asm("BKPT #0");
-    // asm("BKPT #0");
+
     if (validation != TI_ERRC_NONE) {
         *errc = validation;
         return;
     }
-    // asm("BKPT #0");
-
-    if (pwm_config.freq == 0 || pwm_config.duty == 0) {
-        CLR_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_config.instance]);
-        *errc = TI_ERRC_INVALID_ARG;
-        return;  
-    }
 
     //Enable PWM clock
     SET_FIELD(RCC_APB1LENR, RCC_APB1LENR_TIMxEN[pwm_config.instance]);
-    // asm("BKPT #0");
 
     //Set up GPIO pin
-    // TODO: helper method to determine pins/alt mode
     int pin;
     int alt_mode;
     pwm_set_pin_vals(&pin, &alt_mode, pwm_config.instance, pwm_config.channel);
-    // asm("BKPT #0");
     tal_enable_clock(pin);
     tal_set_mode(pin, 2);
     tal_alternate_mode(pin, alt_mode);
 
-    //Set frequency of timer
-    int32_t freq_prescaler = (pwm_config.clock_freq / pwm_config.freq) - 1;
+    // Determine the appropriate ARR field based on 32-bit (TIM2, TIM5) vs 16-bit (TIM3, TIM4)
+    bool is_32bit_timer = (pwm_config.instance == 2 || pwm_config.instance == 5);
+    const field32_t arr_field = is_32bit_timer ? G_TIMx_ARR_ARR_32B : G_TIMx_ARR_ARR_L;
 
-    // asm("BKPT #0");
-    WRITE_FIELD(G_TIMx_ARR[pwm_config.instance], G_TIMx_ARR_ARR_L, freq_prescaler);
-    // asm("BKPT #0");
+    // Set frequency of timer (using the correct 16-bit or 32-bit field)
+    int32_t freq_prescaler = (pwm_config.clock_freq / pwm_config.freq) - 1; 
+
+    WRITE_FIELD(G_TIMx_ARR[pwm_config.instance], arr_field, freq_prescaler);
+    
+    // Determine the appropriate CCR field based on 32-bit vs 16-bit
+    const field32_t ccr_field_1 = is_32bit_timer ? G_TIMx_CCR1_CCR1_32B : G_TIMx_CCR1_CCR1_L;
+    const field32_t ccr_field_2 = is_32bit_timer ? G_TIMx_CCR2_CCR2_32B : G_TIMx_CCR2_CCR2_L;
+    const field32_t ccr_field_3 = is_32bit_timer ? G_TIMx_CCR3_CCR3_32B : G_TIMx_CCR3_CCR3_L;
+    const field32_t ccr_field_4 = is_32bit_timer ? G_TIMx_CCR4_CCR4_32B : G_TIMx_CCR4_CCR4_L;
+
     // Set duty cycle
     int32_t ccr_value = (freq_prescaler * pwm_config.duty) / MAX_DUTY_CYCLE;
+
     switch(pwm_config.channel) {
         case 1: 
-            WRITE_FIELD(G_TIMx_CCR1[pwm_config.instance], G_TIMx_CCR1_CCR1_L, ccr_value);
+            WRITE_FIELD(G_TIMx_CCR1[pwm_config.instance], ccr_field_1, ccr_value);
             break;
         case 2: 
-            WRITE_FIELD(G_TIMx_CCR2[pwm_config.instance], G_TIMx_CCR2_CCR2_L, ccr_value);
+            WRITE_FIELD(G_TIMx_CCR2[pwm_config.instance], ccr_field_2, ccr_value);
             break;
         case 3: 
-            WRITE_FIELD(G_TIMx_CCR3[pwm_config.instance], G_TIMx_CCR3_CCR3_L, ccr_value);
+            WRITE_FIELD(G_TIMx_CCR3[pwm_config.instance], ccr_field_3, ccr_value);
             break;
         case 4: 
-            WRITE_FIELD(G_TIMx_CCR4[pwm_config.instance], G_TIMx_CCR4_CCR4_L, ccr_value);
+            WRITE_FIELD(G_TIMx_CCR4[pwm_config.instance], ccr_field_4, ccr_value);
             break;
         default: 
             *errc = TI_ERRC_INVALID_ARG;
             return;
     }
-    // asm("BKPT #0");
-    // Set to output compare
 
+    // Set to output compare
     if (pwm_config.channel == 1 || pwm_config.channel == 2) {
         WRITE_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR1_OUTPUT_OCxM[pwm_config.channel], 0b0110);
         SET_FIELD(G_TIMx_CCMR1_OUTPUT[pwm_config.instance], G_TIMx_CCMR1_OUTPUT_OCxPE[pwm_config.channel]); 
-        // asm("BKPT #0");
     } else if (pwm_config.channel == 3 || pwm_config.channel == 4) { 
         WRITE_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxM[pwm_config.channel], 0b0110); 
         SET_FIELD(G_TIMx_CCMR2_OUTPUT[pwm_config.instance], G_TIMx_CCMR2_OUTPUT_OCxPE[pwm_config.channel]);
-        // asm("BKPT #0");
     }
 
-    // asm("BKPT #0");
     // Enable PWM channel output on the timer
     SET_FIELD(G_TIMx_CCER[pwm_config.instance], G_TIMx_CCER_CCxE[pwm_config.channel]);
-    // asm("BKPT #0");
     //Enable the timer
     SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_CEN);
-    // asm("BKPT #0");
     // Enable PWM output
     SET_FIELD(G_TIMx_CR1[pwm_config.instance], G_TIMx_CR1_ARPE);
-    // asm("BKPT #0");
 }

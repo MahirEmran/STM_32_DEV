@@ -7858,14 +7858,19 @@ extern const field32_t G_TIMx_CNT_CNT_H;          /** @brief High counter value.
 extern const field32_t G_TIMx_PSC_PSC;            /** @brief Prescaler value. */
 extern const field32_t G_TIMx_ARR_ARR_H;          /** @brief High auto-reload value. */
 extern const field32_t G_TIMx_ARR_ARR_L;          /** @brief Low auto-reload value. */
+extern const field32_t G_TIMx_ARR_ARR_32B;
 extern const field32_t G_TIMx_CCR1_CCR1_H;        /** @brief High capture/compare 1 value. */
 extern const field32_t G_TIMx_CCR1_CCR1_L;        /** @brief Low capture/compare 1 value. */
+extern const field32_t G_TIMx_CCR1_CCR1_32B;
 extern const field32_t G_TIMx_CCR2_CCR2_H;        /** @brief High capture/compare 2 value. */
 extern const field32_t G_TIMx_CCR2_CCR2_L;        /** @brief Low capture/compare 2 value. */
+extern const field32_t G_TIMx_CCR2_CCR2_32B;
 extern const field32_t G_TIMx_CCR3_CCR3_H;        /** @brief High capture/compare value. */
 extern const field32_t G_TIMx_CCR3_CCR3_L;        /** @brief Low capture/compare value. */
+extern const field32_t G_TIMx_CCR3_CCR3_32B;
 extern const field32_t G_TIMx_CCR4_CCR4_H;        /** @brief High capture/compare value. */
 extern const field32_t G_TIMx_CCR4_CCR4_L;        /** @brief Low capture/compare value. */
+extern const field32_t G_TIMx_CCR4_CCR4_32B;
 extern const field32_t G_TIMx_DCR_DBL;            /** @brief DMA burst length. */
 extern const field32_t G_TIMx_DCR_DBA;            /** @brief DMA base address. */
 extern const field32_t G_TIMx_DMAR_DMAB;          /** @brief DMA register for burst accesses. */
