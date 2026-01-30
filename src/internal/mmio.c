@@ -3127,6 +3127,7 @@ rw_reg32_t const SPIx_CGFR[7] = {
 
 /** @subsection SPIx Register Field Definitions */
 
+const field32_t SPIx_RXDR_REG     = {.msk = 0xFFFFFFFFU, .pos = 0 };
 const field32_t SPIx_CR1_IOLOCK   = {.msk = 0x00010000U, .pos = 16};
 const field32_t SPIx_CR1_TCRCI    = {.msk = 0x00008000U, .pos = 15};
 const field32_t SPIx_CR1_RCRCI    = {.msk = 0x00004000U, .pos = 14};

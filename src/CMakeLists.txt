@@ -59,6 +59,8 @@ add_executable(${EXECUTABLE}
   ${CMAKE_SOURCE_DIR}/peripheral/uart.c
   ${CMAKE_SOURCE_DIR}/internal/dma.c
   ${CMAKE_SOURCE_DIR}/peripheral/spi.c
+  ${CMAKE_SOURCE_DIR}/internal/led.c
+  ${CMAKE_SOURCE_DIR}/peripheral/systick.c
  
 )
 

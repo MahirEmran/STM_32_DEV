@@ -1869,6 +1869,7 @@ extern rw_reg32_t const SPIx_CGFR[7];    /** @brief Configuration register. */
 
 /** @subsection SPIx Register Field Definitions */
 
+extern const field32_t SPIx_RXDR_REG;
 extern const field32_t SPIx_CR1_IOLOCK;   /** @brief Locking the AF configuration of associated ios. */
 extern const field32_t SPIx_CR1_TCRCI;    /** @brief CRC calculation initialization pattern control for transmitter. */
 extern const field32_t SPIx_CR1_RCRCI;    /** @brief CRC calculation initialization pattern control for receiver. */

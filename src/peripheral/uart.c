@@ -223,7 +223,7 @@ bool set_alternate_function(uart_channel_t channel, uint8_t tx_pin,
     // TODO: what the HECK does PA0_C mean??
     if (tx_pin == 37 || tx_pin == 137 || tx_pin == 109 || tx_pin == 113) {
       tal_alternate_mode(tx_pin, 8);
-    } else if (tx_pin == 100) {
+    } else if (tx_pin == 101) {
       tal_alternate_mode(tx_pin, 6);
     } else {
       // tal_raise(flag, "Invalid TX Pin for channel");
@@ -240,8 +240,10 @@ bool set_alternate_function(uart_channel_t channel, uint8_t tx_pin,
     // } else {
     //   return false;
     // }
-    if (rx_pin == 38 || rx_pin == 136 || rx_pin == 110 || rx_pin == 112) {
-      tal_alternate_mode(rx_pin, 0);
+    if (rx_pin == 38 || rx_pin == 137 || rx_pin == 110 || rx_pin == 112) {
+      tal_alternate_mode(rx_pin, 8);
+    } else if (rx_pin == 100) {
+      tal_alternate_mode(rx_pin, 6);
     } else {
       // tal_raise(flag, "Invalid RX Pin for channel");
       return false;
@@ -400,10 +402,9 @@ bool set_alternate_function(uart_channel_t channel, uint8_t tx_pin,
       return false;
     }
     break;
-  case UART_CHANNEL_COUNT:
-    break;
+  default:
+    return false;
   }
-  return true;
 }
 
 bool uart_write_byte(uart_channel_t channel, uint8_t data) {
@@ -480,10 +481,10 @@ bool uart_read_byte(uint8_t channel, uint8_t *data) {
 static inline bool verify_transfer_parameters(uart_channel_t channel, uint8_t *buff,
                                        size_t size) {
 
-  if (channel == ((void*) (0))) {
+  if (channel == 0) { // USED TO BE: channel == ((void*) (0)
     return false;
   }
-  if (buff == ((void*) (0))) {
+  if (buff == 0) { // USED TO BE: channel == ((void*) (0)
     // tal_raise(flag, "Buffer cannot be NULL");
     return false;
   }
@@ -699,7 +700,7 @@ bool uart_init(uart_config_t *usart_config, dma_callback_t *callback,
 
   // Enable FIFOs
   SET_FIELD(UARTx_CR1[channel], UARTx_CR1_FIFOEN);
-
+  
 }
 
   dma_config_t dma_tx_stream = {
