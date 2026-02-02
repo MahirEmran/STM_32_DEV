@@ -16,7 +16,7 @@
  *
  * @file peripheral/actuator.h
  * @authors Mahir Emran, Shlok Rathi
- * @brief Driver interface for MAX22216/MAX22217 solenoid/actuator controller.
+ * @brief Actuator driver interface for MAX22216/MAX22217 solenoid controller.
  */
 #pragma once
 
@@ -33,40 +33,40 @@
  **************************************************************************************************/
 
 typedef enum {
-  MAX22216_CHANNEL_0 = 0,
-  MAX22216_CHANNEL_1 = 1,
-  MAX22216_CHANNEL_2 = 2,
-  MAX22216_CHANNEL_3 = 3,
-  MAX22216_CHANNEL_COUNT = 4,
-} max22216_channel_t;
+  ACTUATOR_CHANNEL_0 = 0,
+  ACTUATOR_CHANNEL_1 = 1,
+  ACTUATOR_CHANNEL_2 = 2,
+  ACTUATOR_CHANNEL_3 = 3,
+  ACTUATOR_CHANNEL_COUNT = 4,
+} actuator_channel_t;
 
 typedef enum {
-  MAX22216_CTRL_VDR_VDR = 0,
-  MAX22216_CTRL_CDR_CDR = 1,
-  MAX22216_CTRL_LIMITER_VDR = 2,
-  MAX22216_CTRL_VDR_CDR = 3,
-} max22216_ctrl_mode_t;
+  ACTUATOR_CTRL_VDR_VDR = 0,
+  ACTUATOR_CTRL_CDR_CDR = 1,
+  ACTUATOR_CTRL_LIMITER_VDR = 2,
+  ACTUATOR_CTRL_VDR_CDR = 3,
+} actuator_ctrl_mode_t;
 
 typedef enum {
-  MAX22216_PWM_DIV_1 = 0,
-  MAX22216_PWM_DIV_2 = 1,
-  MAX22216_PWM_DIV_4 = 2,
-  MAX22216_PWM_DIV_8 = 3,
-} max22216_pwm_div_t;
+  ACTUATOR_PWM_DIV_1 = 0,
+  ACTUATOR_PWM_DIV_2 = 1,
+  ACTUATOR_PWM_DIV_4 = 2,
+  ACTUATOR_PWM_DIV_8 = 3,
+} actuator_pwm_div_t;
 
 typedef enum {
-  MAX22216_SLEW_FAST = 0,
-  MAX22216_SLEW_400V_US = 1,
-  MAX22216_SLEW_200V_US = 2,
-  MAX22216_SLEW_100V_US = 3,
-} max22216_slew_rate_t;
+  ACTUATOR_SLEW_FAST = 0,
+  ACTUATOR_SLEW_400V_US = 1,
+  ACTUATOR_SLEW_200V_US = 2,
+  ACTUATOR_SLEW_100V_US = 3,
+} actuator_slew_rate_t;
 
 typedef enum {
-  MAX22216_TBLANK_0 = 0,
-  MAX22216_TBLANK_24 = 1,
-  MAX22216_TBLANK_48 = 2,
-  MAX22216_TBLANK_96 = 3,
-} max22216_tblank_t;
+  ACTUATOR_TBLANK_0 = 0,
+  ACTUATOR_TBLANK_24 = 1,
+  ACTUATOR_TBLANK_48 = 2,
+  ACTUATOR_TBLANK_96 = 3,
+} actuator_tblank_t;
 
 typedef struct {
   spi_device_t spi_device;
@@ -77,7 +77,7 @@ typedef struct {
   uint8_t stat1_pin;
   uint8_t crc_en_pin;
   bool enable_crc;
-} max22216_config_t;
+} actuator_config_t;
 
 typedef struct {
   spi_device_t spi_device;
@@ -87,7 +87,7 @@ typedef struct {
   uint8_t stat1_pin;
   uint8_t crc_en_pin;
   bool enable_crc;
-} max22216_t;
+} actuator_t;
 
 typedef struct {
   uint16_t dc_l2h;
@@ -101,84 +101,84 @@ typedef struct {
   bool open_load_enable;
   bool h2l_enable;
   bool hhf_enable;
-  max22216_ctrl_mode_t ctrl_mode;
+  actuator_ctrl_mode_t ctrl_mode;
   bool high_side;
-  max22216_pwm_div_t pwm_div;
-  max22216_tblank_t t_blank;
-  max22216_slew_rate_t slew_rate;
+  actuator_pwm_div_t pwm_div;
+  actuator_tblank_t t_blank;
+  actuator_slew_rate_t slew_rate;
   uint8_t gain;
   uint8_t snsf;
-} max22216_channel_config_t;
+} actuator_channel_config_t;
 
 /**************************************************************************************************
  * @section Function Definitions
  **************************************************************************************************/
 
 /**
- * @brief Initialize a MAX22216/MAX22217 device instance.
+ * @brief Initialize an actuator device instance.
  *
  * This configures the SPI controller, CS pin, and any optional GPIO pins
  * (ENABLE, FAULT, STAT0, STAT1, CRC_EN).
  */
-enum ti_errc_t max22216_init(max22216_t *dev, const max22216_config_t *config);
+enum ti_errc_t actuator_init(actuator_t *dev, const actuator_config_t *config);
 
 /**
  * @brief Drive the ENABLE pin high or low.
  */
-enum ti_errc_t max22216_set_enable(max22216_t *dev, bool enable);
+enum ti_errc_t actuator_set_enable(actuator_t *dev, bool enable);
 
 /**
  * @brief Write a 16-bit value to a register address.
  */
-enum ti_errc_t max22216_write_reg(max22216_t *dev, uint8_t addr, uint16_t value,
-                                 uint8_t *status_out);
+enum ti_errc_t actuator_write_reg(actuator_t *dev, uint8_t addr,
+                                 uint16_t value, uint8_t *status_out);
 
 /**
  * @brief Read a 16-bit value from a register address.
  */
-enum ti_errc_t max22216_read_reg(max22216_t *dev, uint8_t addr, uint16_t *value,
-                                uint8_t *status_out);
+enum ti_errc_t actuator_read_reg(actuator_t *dev, uint8_t addr,
+                                uint16_t *value, uint8_t *status_out);
 
 /**
  * @brief Set ACTIVE bit in `GLOBAL_CFG`.
  */
-enum ti_errc_t max22216_set_active(max22216_t *dev, bool active);
+enum ti_errc_t actuator_set_active(actuator_t *dev, bool active);
 
 /**
  * @brief Set master PWM frequency divider (F_PWM_M).
  */
-enum ti_errc_t max22216_set_pwm_master(max22216_t *dev, uint8_t f_pwm_m);
+enum ti_errc_t actuator_set_pwm_master(actuator_t *dev, uint8_t f_pwm_m);
 
 /**
  * @brief Configure channel registers for solenoid/actuator control.
  */
-enum ti_errc_t max22216_configure_channel(max22216_t *dev,
-                                          max22216_channel_t channel,
-                                          const max22216_channel_config_t *cfg);
+enum ti_errc_t actuator_configure_channel(actuator_t *dev,
+                                          actuator_channel_t channel,
+                                          const actuator_channel_config_t *cfg);
 
 /**
  * @brief Enable or disable a channel using `GLOBAL_CTRL` CNTL bits.
  */
-enum ti_errc_t max22216_set_channel_enable(max22216_t *dev,
-                                           max22216_channel_t channel,
+enum ti_errc_t actuator_set_channel_enable(actuator_t *dev,
+                                           actuator_channel_t channel,
                                            bool enable);
 
 /**
  * @brief Read the `STATUS` register.
  */
-enum ti_errc_t max22216_read_status(max22216_t *dev, uint16_t *status,
+enum ti_errc_t actuator_read_status(actuator_t *dev, uint16_t *status,
                                    uint8_t *status_out);
 
 /**
  * @brief Read the fault log registers.
  */
-enum ti_errc_t max22216_read_fault(max22216_t *dev, uint16_t *fault0,
+enum ti_errc_t actuator_read_fault(actuator_t *dev, uint16_t *fault0,
                                   uint16_t *fault1, uint8_t *status_out);
 
 /**
  * @brief Read the I_MONITOR register for a channel.
  */
-enum ti_errc_t max22216_read_i_monitor(max22216_t *dev,
-                                      max22216_channel_t channel,
+enum ti_errc_t actuator_read_i_monitor(actuator_t *dev,
+                                      actuator_channel_t channel,
                                       uint16_t *i_monitor,
                                       uint8_t *status_out);
