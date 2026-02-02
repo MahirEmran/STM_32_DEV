@@ -226,6 +226,48 @@ static UART_Regs UART_MAP[9] = {
 })
 
 /**************************************************************************************************
+ * @section MAX22216/MAX22217 Register Definitions
+ **************************************************************************************************/
+#define MAX22216_REG_GLOBAL_CTRL   0x00
+#define MAX22216_REG_GLOBAL_CFG    0x01
+#define MAX22216_REG_STATUS        0x02
+#define MAX22216_REG_STATUS_CFG    0x03
+#define MAX22216_REG_DC_H2L        0x04
+#define MAX22216_REG_VM_MONITOR    0x05
+#define MAX22216_REG_VM_THRESHOLD  0x06
+#define MAX22216_REG_F_AC          0x07
+#define MAX22216_REG_U_AC_SCAN     0x08
+
+#define MAX22216_REG_FAULT0        0x65
+#define MAX22216_REG_FAULT1        0x66
+
+#define MAX22216_GLOBAL_CTRL_F_PWM_M_POS 4
+#define MAX22216_GLOBAL_CTRL_F_PWM_M_MSK (0xFu << MAX22216_GLOBAL_CTRL_F_PWM_M_POS)
+#define MAX22216_GLOBAL_CTRL_CNTL_POS(ch) (ch)
+
+#define MAX22216_GLOBAL_CFG_ACTIVE_POS    15
+#define MAX22216_GLOBAL_CFG_MASKS_POS     8
+#define MAX22216_GLOBAL_CFG_CNTL_POL_POS  7
+#define MAX22216_GLOBAL_CFG_STAT_POL_POS  6
+#define MAX22216_GLOBAL_CFG_VDR_MODE_POS  4
+#define MAX22216_GLOBAL_CFG_CHS_POS       0
+
+#define MAX22216_CFG_CTRL0_CTRL_MODE_POS  14
+#define MAX22216_CFG_CTRL0_HHF_EN_POS     13
+#define MAX22216_CFG_CTRL0_OL_EN_POS      12
+#define MAX22216_CFG_CTRL0_H2L_EN_POS     11
+#define MAX22216_CFG_CTRL0_RDWE_POS       10
+#define MAX22216_CFG_CTRL0_RMDE_POS       9
+#define MAX22216_CFG_CTRL0_RUPE_POS       8
+
+#define MAX22216_CFG_CTRL1_HSNLS_POS      10
+#define MAX22216_CFG_CTRL1_F_PWM_POS      8
+#define MAX22216_CFG_CTRL1_T_BLANK_POS    6
+#define MAX22216_CFG_CTRL1_SLEW_POS       4
+#define MAX22216_CFG_CTRL1_GAIN_POS       2
+#define MAX22216_CFG_CTRL1_SNSF_POS       0
+
+/**************************************************************************************************
  * @section COMP1 Definitions
  **************************************************************************************************/
 

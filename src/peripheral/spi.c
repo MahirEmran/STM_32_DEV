@@ -265,16 +265,23 @@ int spi_init(uint8_t instance, spi_config_t *spi_config) {
             break;
     }
 
-    // Configure as master
+       // Configure as master
     SET_FIELD(SPIx_CFG2[instance], SPIx_CFG2_MASTER);
+    // 1) Disable SPI (clear SPE) — safe to do even if SPE was already 0
+    CLR_FIELD(SPIx_CR1[instance], SPIx_CR1_SPE);
 
-    // Configure SPI software-NSS
-    CLR_FIELD(SPIx_CFG2[instance], SPIx_CFG2_SSOE);
-    CLR_FIELD(SPIx_CFG2[instance], SPIx_CFG2_SSM);
+    // 2) Force software NSS and internal SSI = 1 (prevent re-triggering MODF)
+    SET_FIELD(SPIx_CFG2[instance], SPIx_CFG2_SSM);
+    SET_FIELD(SPIx_CR1[instance], SPIx_CR1_SSI);
 
-    // Enable the SPI
+    // 3) Perform the required read(SR) then write(CR1) sequence to clear MODF
+    volatile uint32_t sr_tmp = *SPIx_SR[instance];        // READ SR (volatile)
+    uint32_t cr1_tmp = *SPIx_CR1[instance];               // read CR1
+    *SPIx_CR1[instance] = cr1_tmp;                        // WRITE CR1 -> completes readSR/writeCR1 seq
+    (void)sr_tmp; (void)cr1_tmp;
+
+    // 4) Re-enable SPI
     SET_FIELD(SPIx_CR1[instance], SPIx_CR1_SPE);
-
     return TI_ERRC_NONE;
 }
 
@@ -345,10 +352,10 @@ int spi_transfer_sync(struct spi_sync_transfer_t *transfer) {
                 return TI_ERRC_SPI_BLOCKING_TIMEOUT;
             }
         }
-        asm("BKPT #0");
+       
         // Write next byte
         *SPIx_TXDR[device.instance] = ((uint8_t *)source)[i];
-
+        asm("BKPT #0");
         // Wait until RX buffer has data
         local_timeout = timeout;
         while (!READ_FIELD(SPIx_SR[device.instance], SPIx_SR_RXP)) {
